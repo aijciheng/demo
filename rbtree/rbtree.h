@@ -111,37 +111,69 @@ class RBTree {
         }
         return -1;
     }
+        
+    int depth() {
+        return depth(root_, 0);
+    }
+
+    int depth(Node *node, int d) {
+        if (node == &nil_) {
+            return d;
+        }
+
+        int left_depth = depth(node->left(), d + 1);
+        int right_depth = depth(node->right(), d + 1);
+        return left_depth > right_depth ? left_depth : right_depth;
+    }
 
     void print_info() {
         if (root_ != &nil_) {
             std::list<Node*> list;   
-            std::list<Node*> exist_list;
             list.push_back(root_);
-            exist_list.push_back(root_);
-            int tree_depth = 1;
+            int tree_depth = depth();
+            printf("tree depth : %d\n", tree_depth);
+            int blank_count = (tree_depth - 1) * 2;
+            int exist_count = 1;
             int count = 0;
-            while (exist_list.size() > 0) {
+            int cur_depth = 1;
+            while (exist_count > 0) {
                 Node *node = list.front();
                 list.pop_front();
                 count++;
-                if (count % 2 == 0) {
-                    exist_list.clear(); 
-                }
-                if (node != &nil_ && node->left() != &nil_) {
-                    exist_list.push_back(node->left());
-                    list.push_back(node->left());
+                if (count == (1 << (cur_depth - 1))) {
+                    printf("\n");
+                    int real_print_blank = blank_count - (cur_depth - 1) * 2;
+                    for (int i = 0; i < real_print_blank; i++) 
+                        printf(" ");
+                    cur_depth++;
                 } else {
+                    printf("   ");
+                }
+               
+                if (node->key() != -1) {
+                    printf("%d", node->key()); 
+                    exist_count--;
+                } else {
+                    printf("n");
+                }
+            
+
+                if (node == &nil_ || node->left() == &nil_) {
                     list.push_back(&nil_);
+                } else {
+                    list.push_back(node->left());
+                    exist_count++;
                 }
 
-                if (node != &nil_ && node->right() != &nil_) {
-                    exist_list.push_back(node->right());
-                    list.push_back(node->right());
-                } else {
+                if (node == &nil_ || node->right() == &nil_) {
                     list.push_back(&nil_);
+                } else {
+                    list.push_back(node->right());
+                    exist_count++;
                 }
 
             }
+            printf("\n");
         }
     }
 
