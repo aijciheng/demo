@@ -126,28 +126,42 @@ class RBTree {
         return left_depth > right_depth ? left_depth : right_depth;
     }
 
+    int get_blank_count(int depth, int max_depth) {
+        return (1 + 1 << (max_depth - depth + 1));
+    }
+
+    int char_count(int depth, int max_depth) {
+        int num_count = 1 << (depth - 1); 
+        int blank_block_count = num_count - 1;
+        int blank_count = get_blank_count(depth, max_depth);
+        return num_count + blank_block_count * blank_count;
+    }
+
     void print_info() {
         if (root_ != &nil_) {
             std::list<Node*> list;   
             list.push_back(root_);
             int tree_depth = depth();
             printf("tree depth : %d\n", tree_depth);
-            int blank_count = (tree_depth - 1) * 2;
             int exist_count = 1;
             int count = 0;
             int cur_depth = 1;
+            int blank_count = -1;
             while (exist_count > 0) {
                 Node *node = list.front();
                 list.pop_front();
                 count++;
                 if (count == (1 << (cur_depth - 1))) {
                     printf("\n");
-                    int real_print_blank = blank_count - (cur_depth - 1) * 2;
+                    int real_print_blank = (char_count(tree_depth, tree_depth) - char_count(cur_depth, tree_depth)) / 2;
+                    blank_count = get_blank_count(cur_depth, tree_depth);
                     for (int i = 0; i < real_print_blank; i++) 
                         printf(" ");
                     cur_depth++;
                 } else {
-                    printf("   ");
+                    for (int i = 0; i < blank_count; i++) {
+                        printf(" ");
+                    }
                 }
                
                 if (node->key() != -1) {
