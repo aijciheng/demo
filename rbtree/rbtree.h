@@ -3,6 +3,32 @@
 
 #include <list>
 
+#define NONE                 "\e[0m"
+#define BLACK                "\e[0;30m"
+#define L_BLACK              "\e[1;30m"
+#define RED                  "\e[0;31m"
+#define L_RED                "\e[1;31m"
+#define GREEN                "\e[0;32m"
+#define L_GREEN              "\e[1;32m"
+#define BROWN                "\e[0;33m"
+#define YELLOW               "\e[1;33m"
+#define BLUE                 "\e[0;34m"
+#define L_BLUE               "\e[1;34m"
+#define PURPLE               "\e[0;35m"
+#define L_PURPLE             "\e[1;35m"
+#define CYAN                 "\e[0;36m"
+#define L_CYAN               "\e[1;36m"
+#define GRAY                 "\e[0;37m"
+#define WHITE                "\e[1;37m"
+
+#define BOLD                 "\e[1m"
+#define UNDERLINE            "\e[4m"
+#define BLINK                "\e[5m"
+#define REVERSE              "\e[7m"
+#define HIDE                 "\e[8m"
+#define CLEAR                "\e[2J"
+#define CLRLINE              "\r\e[K" //or "\e[1K\r"
+
 class PairInfo {
  public:
     PairInfo(int key, int value) : key_(key), value_(value) {}
@@ -86,6 +112,7 @@ class RBTree {
                 parent_node->set_right(z);
             }
             /* insert fixup */
+            print_info();
 
             insert_fixup(z);
         }
@@ -127,7 +154,7 @@ class RBTree {
     }
 
     int get_blank_count(int depth, int max_depth) {
-        return (1 + 1 << (max_depth - depth + 1));
+        return (1 << (max_depth - depth + 1)) - 1;
     }
 
     int char_count(int depth, int max_depth) {
@@ -165,7 +192,13 @@ class RBTree {
                 }
                
                 if (node->key() != -1) {
+                    if (node->color() == COLOR::COLOR_RED) {
+                        printf(RED);
+                    }
                     printf("%d", node->key()); 
+                    if (node->color() == COLOR::COLOR_RED) {
+                        printf(NONE);
+                    }
                     exist_count--;
                 } else {
                     printf("n");
@@ -219,7 +252,10 @@ class RBTree {
         Node *y = x->right(); 
         x->set_right(y->left());
         y->set_left(x);
-        if (is_left(x)) {
+        if (x->parent() == &nil_) {
+            /* root_ */
+            root_ = y;
+        } else if (is_left(x)) {
             x->parent()->set_left(y);
         } else {
             x->parent()->set_right(y);
@@ -237,7 +273,10 @@ class RBTree {
         Node *x = y->left();
         y->set_left(x->right());
         x->set_right(y);
-        if (is_left(y)) {
+        if (y->parent() == &nil_) {
+            /* root */
+            root_ = x;
+        } else if (is_left(y)) {
             y->parent()->set_left(x);
         } else {
             y->parent()->set_right(x);
@@ -249,6 +288,9 @@ class RBTree {
     void insert_fixup(Node *z) {
         if (z == &nil_) {
             return;
+        }
+        if (z == root_) {
+            z->set_color(COLOR::COLOR_BLACK);
         }
         Node *p = z->parent();
         if (p == &nil_) {
@@ -282,15 +324,23 @@ class RBTree {
 
         if (is_left(z) && is_left(p)) {
             /* case 3 */
+            if (p->parent() != &nil_) {
+                p->parent()->set_color(COLOR::COLOR_RED); 
+            }
+            if (p != &nil_) {
+                p->set_color(COLOR::COLOR_BLACK);
+            }
             right_rotate(p->parent());
-            p->parent()->set_color(COLOR::COLOR_RED); 
-            p->set_color(COLOR::COLOR_BLACK);
         }
         if (is_right(z) && is_right(p)) {
             /* case 3 */
+            if (p->parent() != &nil_) {
+                p->parent()->set_color(COLOR::COLOR_RED);
+            }
+            if (p != &nil_) {
+                p->set_color(COLOR::COLOR_BLACK);
+            }
             left_rotate(p->parent());
-            p->parent()->set_color(COLOR::COLOR_RED);
-            p->set_color(COLOR::COLOR_BLACK);
         }
     }
 
