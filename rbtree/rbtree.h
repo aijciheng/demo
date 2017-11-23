@@ -82,7 +82,11 @@ class Node {
 class RBTree {
  public:
     typedef Node::COLOR COLOR;
-    RBTree() : root_(&nil_) {}
+    RBTree() : nil_(), root_(&nil_) {}
+    ~RBTree() {
+        free_node(root_);
+    }
+
     int add(PairInfo pair_info) {
         Node *parent_node = NULL;
         Node *node = root_;
@@ -119,11 +123,28 @@ class RBTree {
         return 0; 
     } 
 
-    ~RBTree() {
-        free_node(root_);
-    }
+    int remove(int key) {
+        Node *node = root_;
+        while (node != &nil_) {
+            if (node->key() > key) {
+                node = node->left();
+            } else if (node->key() < key) {
+                node = node->right();
+            } else {
+                /* found */
+                break;
+            }
+        }
 
-    
+        if (node == &nil_) {
+            /* not found */
+            return -1;
+        }
+
+        delete_node(node);
+        delete node;
+        return 0;
+    }
 
     int get(int key) {
         Node *node = root_;
@@ -223,6 +244,30 @@ class RBTree {
             printf("\n");
         }
     }
+    
+    bool check_tree() {
+        Node *node = &nil_;
+        std::list<Node*> list;
+        list.push_back(root_);
+        while (list.size() > 0) {
+            node = list.front();
+            list.pop_front();
+            if (node->left() != &nil_) {
+                if (node->left()->parent() != node) {
+                    return false;
+                }
+                list.push_back(node->left());
+            }
+                
+            if (node->right() != &nil_) {
+                if (node->right()->parent() != node) {
+                    return false;
+                }
+                list.push_back(node->right());
+            }
+        }
+        return true;
+    }
 
  private:
     Node *sibling(Node *p) {
@@ -251,6 +296,9 @@ class RBTree {
          */
         Node *y = x->right(); 
         x->set_right(y->left());
+        if (y->left() != &nil_) {
+            y->left()->set_parent(x);
+        }
         y->set_left(x);
         if (x->parent() == &nil_) {
             /* root_ */
@@ -272,6 +320,9 @@ class RBTree {
          */
         Node *x = y->left();
         y->set_left(x->right());
+        if (x->right() != &nil_) {
+            x->right()->set_parent(y);
+        }
         x->set_right(y);
         if (y->parent() == &nil_) {
             /* root */
@@ -344,49 +395,37 @@ class RBTree {
         }
     }
 
-    int delete(int key) {
-        Node *node = root_;
-        while (node != nil_) {
-            if (node->key() > key) {
-                node = node->left();
-            } else if (node->key() < key) {
-                node = node->right();
-            } else {
-                /* found */
-                break;
-            }
-        }
-
-        if (node == nil_) {
-            /* not found */
-            return -1;
-        }
-
-        delete_node(node);
-        return 0;
-    }
-
     void delete_node(Node *z) {
         Node *y = z; 
         Node::COLOR orign_y_color = y->color();
         Node *x = NULL;
-        if (z->left() == nil_) {
-            y = z->right(); 
-            orign_y_color = y->color();
-            exchange(z, y);
-        } else if (z->right() == nil_) {
-            y = z->left();
-            orign_y_color = y->color();
-            exchange(z, y);
+        if (z->left() == &nil_) {
+            x = z->right(); 
+            exchange(y, x);
+        } else if (z->right() == &nil_) {
+            x = z->left();
+            exchange(y, x);
         } else {
             y = min(z->right());
             orign_y_color = y->color();
-            if (y == z->right()) {
+            x = y->right();
+            if (y->parent() == z) {
+                x->set_parent(y); // may be x is nil 
+            } else {
+                exchange(y, x);
+                y->set_right(z->right());
+                z->right()->set_parent(y);
             }
             exchange(z, y);
+            y->set_left(z->left());    
+            z->left()->set_parent(y); 
+            exchange(z, y);
+            y->set_color(z->color());
         }
 
-        Node *x = y->right();
+        if (orign_y_color == COLOR::COLOR_BLACK) {
+            delete_fixup(x);
+        }
     }
 
     void delete_fixup(Node *node) {
@@ -433,7 +472,7 @@ class RBTree {
                     w = node->parent()->left();
                 }
 
-                if (w->left()->color == COLOR::COLOR_BLACK && w->right()->color() == COLOR::COLOR_BLACK) {
+                if (w->left()->color() == COLOR::COLOR_BLACK && w->right()->color() == COLOR::COLOR_BLACK) {
                     /* case 2, only can iterator case, it my change case 1, 3, 4.
                        but if case 1 to case 2, and then will end while soon. */
                     w->set_color(COLOR::COLOR_RED);
@@ -448,7 +487,7 @@ class RBTree {
                     }
                     /* case 4 */
                     w->set_color(node->parent()->color());
-                    node->parent()->set_color(COLOR::COLOR__BLACK);
+                    node->parent()->set_color(COLOR::COLOR_BLACK);
                     w->left()->set_color(COLOR::COLOR_BLACK);
                     right_rotate(node->parent());
                     node = root_;
@@ -460,19 +499,18 @@ class RBTree {
     }
 
     void exchange(Node *z, Node *y) {
-        y->set_left(z->left());        
-        y->set_right(z->right());
-        if (z->parent() == nil_) {
+        if (z->parent() == &nil_) {
             root_ = y;
         } else if(z->parent()->left() == z) {
-            z->parent()-set_left(y); 
+            z->parent()->set_left(y); 
         } else {
             z->parent()->set_right(y);
         } 
+        y->set_parent(z->parent());
     }
 
     Node *min(Node *node) {
-        while (node->left() != nil_) {
+        while (node->left() != &nil_) {
             node = node->left();
         }
         return node;
@@ -490,8 +528,7 @@ class RBTree {
     }
 
     Node *root_;
-    static Node nil_;
+    Node nil_;
 };
 
-Node RBTree::nil_;
 #endif
