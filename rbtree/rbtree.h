@@ -116,7 +116,7 @@ class RBTree {
                 parent_node->set_right(z);
             }
             /* insert fixup */
-            print_info();
+            //print_info();
 
             insert_fixup(z);
         }
