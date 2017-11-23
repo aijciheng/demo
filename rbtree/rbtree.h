@@ -419,7 +419,7 @@ class RBTree {
             exchange(z, y);
             y->set_left(z->left());    
             z->left()->set_parent(y); 
-            exchange(z, y);
+
             y->set_color(z->color());
         }
 
