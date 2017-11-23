@@ -80,6 +80,7 @@ int main() {
     }
     std::cout << "删除测试通过" << std::endl;
 
-    delete num;
+    delete[] num;
+    delete[] dnum;
     return 0;
 }
