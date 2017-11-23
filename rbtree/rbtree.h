@@ -116,7 +116,7 @@ class RBTree {
 
             insert_fixup(z);
         }
-         
+        return 0; 
     } 
 
     ~RBTree() {
@@ -342,6 +342,140 @@ class RBTree {
             }
             left_rotate(p->parent());
         }
+    }
+
+    int delete(int key) {
+        Node *node = root_;
+        while (node != nil_) {
+            if (node->key() > key) {
+                node = node->left();
+            } else if (node->key() < key) {
+                node = node->right();
+            } else {
+                /* found */
+                break;
+            }
+        }
+
+        if (node == nil_) {
+            /* not found */
+            return -1;
+        }
+
+        delete_node(node);
+        return 0;
+    }
+
+    void delete_node(Node *z) {
+        Node *y = z; 
+        Node::COLOR orign_y_color = y->color();
+        Node *x = NULL;
+        if (z->left() == nil_) {
+            y = z->right(); 
+            orign_y_color = y->color();
+            exchange(z, y);
+        } else if (z->right() == nil_) {
+            y = z->left();
+            orign_y_color = y->color();
+            exchange(z, y);
+        } else {
+            y = min(z->right());
+            orign_y_color = y->color();
+            if (y == z->right()) {
+            }
+            exchange(z, y);
+        }
+
+        Node *x = y->right();
+    }
+
+    void delete_fixup(Node *node) {
+        while (node != root_ && node->color() == COLOR::COLOR_BLACK) {
+            if (node->parent()->left() == node) {
+                /* left */
+                Node *w = node->parent()->right();
+                if (w->color() == COLOR::COLOR_RED) {
+                    /* case 1, change case 1 to case 2, 3 or 4 */
+                    node->parent()->set_color(COLOR::COLOR_RED);
+                    w->set_color(COLOR::COLOR_BLACK);
+                    left_rotate(node->parent());
+                    w = node->parent()->right();
+                }
+
+                if (w->left()->color() == COLOR::COLOR_BLACK && w->right()->color() == COLOR::COLOR_BLACK){
+                    /* case 2, only can iterator case, it may change case 1, 3, 4.
+                       but if case 1 to case 2, and then will end while soon. */
+                    w->set_color(COLOR::COLOR_RED);  
+                    node = node->parent();
+                } else {
+                    if (w->right()->color() == COLOR::COLOR_BLACK) {
+                        /* case 3, change case 4 */
+                        w->left()->set_color(COLOR::COLOR_BLACK);
+                        w->set_color(COLOR::COLOR_RED);
+                        right_rotate(w);
+                        w = node->parent()->right();
+                    }
+                    /* case 4 */
+                    w->set_color(node->parent()->color());
+                    node->parent()->set_color(COLOR::COLOR_BLACK);
+                    w->right()->set_color(COLOR::COLOR_BLACK);
+                    left_rotate(node->parent());
+                    node = root_;
+                }
+            } else {
+                /* right */
+                Node *w = node->parent()->left();
+                if (w->color() == COLOR::COLOR_RED) {
+                    /* case 1, change case 1 to case 2, 3 or 4 */
+                    node->parent()->set_color(COLOR::COLOR_RED);
+                    w->set_color(COLOR::COLOR_BLACK);
+                    right_rotate(node->parent());
+                    w = node->parent()->left();
+                }
+
+                if (w->left()->color == COLOR::COLOR_BLACK && w->right()->color() == COLOR::COLOR_BLACK) {
+                    /* case 2, only can iterator case, it my change case 1, 3, 4.
+                       but if case 1 to case 2, and then will end while soon. */
+                    w->set_color(COLOR::COLOR_RED);
+                    node = node->parent();
+                } else {
+                    if (w->left()->color() == COLOR::COLOR_BLACK) {
+                        /* case 3, change case 4 */
+                        w->right()->set_color(COLOR::COLOR_BLACK);
+                        w->set_color(COLOR::COLOR_RED);
+                        left_rotate(w);
+                        w = node->parent()->left();
+                    }
+                    /* case 4 */
+                    w->set_color(node->parent()->color());
+                    node->parent()->set_color(COLOR::COLOR__BLACK);
+                    w->left()->set_color(COLOR::COLOR_BLACK);
+                    right_rotate(node->parent());
+                    node = root_;
+                }
+            }
+        }
+
+        node->set_color(COLOR::COLOR_BLACK);
+    }
+
+    void exchange(Node *z, Node *y) {
+        y->set_left(z->left());        
+        y->set_right(z->right());
+        if (z->parent() == nil_) {
+            root_ = y;
+        } else if(z->parent()->left() == z) {
+            z->parent()-set_left(y); 
+        } else {
+            z->parent()->set_right(y);
+        } 
+    }
+
+    Node *min(Node *node) {
+        while (node->left() != nil_) {
+            node = node->left();
+        }
+        return node;
     }
 
     void free_node(Node *node) {
