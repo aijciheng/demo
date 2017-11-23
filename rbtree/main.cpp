@@ -9,18 +9,28 @@ int main(int argc, char **argv) {
         std::cout << "add " << i << std::endl;
         rbtree.add(PairInfo(i, i + 1));
         rbtree.print_info();
+        if (rbtree.check_tree()) {
+            std::cout << "通过测试" << std::endl;
+        } else {
+            std::cout << "未通过测试" << std::endl;
+            return -1;
+        }
     }
 
-    //rbtree.print_info();
 
-    //int max_char_count = rbtree.char_count(5, 5);
-    //for (int i = 1; i <= 5; i++) {
-    //    printf("%d\n", (max_char_count - rbtree.char_count(i, 5)) / 2);
-    //}
-    
-    //for (int i = 0; i < 100; i++) {
-    //    int value = rbtree.get(i);
-    //    std::cout << value << std::endl;
-    //}
+    std::cout << "==============================" << std::endl;
+    std::cout << "remove 4" << std::endl;
+    rbtree.remove(4); 
+    rbtree.print_info();
+
+    std::cout << "==============================" << std::endl;
+    std::cout << "remove 1" << std::endl;
+    rbtree.remove(1);
+    rbtree.print_info();
+
+    std::cout << "==============================" << std::endl;
+    std::cout << "remove 3" << std::endl;
+    rbtree.remove(3);
+    rbtree.print_info();
     return 0;
 }
